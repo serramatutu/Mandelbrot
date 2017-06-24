@@ -1,6 +1,6 @@
 'use strict';
 
-const ITERACOES = 500;
+const ITERACOES = 100;
 const WIDTH = 1920; //1920;
 const HEIGHT = 1080; //1080;
 
@@ -62,17 +62,15 @@ window.onload = function() {
             points[i][j] = new MandelbrotPoint((i * 3 / ZOOM) / WIDTH - 2/ZOOM + COORD_X,
                                                (j * 2 / ZOOM) / HEIGHT - 1/ZOOM + COORD_Y); // Define o ponto de início e fim
         }
-
-
     }
 
     //  Variáveis de cor
     //  Start   End       Delta
-    var sr = 0, er = 0, deltaRed = er - sr,
-        sb = 0, eb = 0, deltaBlue = eb - sb,
-        sg = 0, eg = 255, deltaGreen = eg - sg;
+    var sr = 75, er = 218, deltaRed = er - sr,
+        sb = 0, eb = 112, deltaBlue = eb - sb,
+        sg = 130, eg = 214, deltaGreen = eg - sg;
 
-    ctx.fillStyle = '#' + ((sr << 16) | (sb << 8) | sg).toString(16);
+    ctx.fillStyle = '#' + ((er << 16) | (eb << 8) | eg).toString(16);
 
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     // Itera sobre cada ponto
