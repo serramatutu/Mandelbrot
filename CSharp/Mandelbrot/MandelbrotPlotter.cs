@@ -100,9 +100,6 @@ namespace Mandelbrot
             Parallel.Invoke(tasks);
 
 
-            // Espera o final de todas as tasks
-            //Task.WaitAll(tasks);
-
             Marshal.Copy(buffer, 0, data.Scan0, buffer.Length); // Copia as informações no buffer de volta à imagem
             plotImg.UnlockBits(data); // Libera a imagem
 
@@ -129,13 +126,6 @@ namespace Mandelbrot
 
         private float[] progresses;
 
-        /// <summary>
-        /// Desenha os pontos para uma iteração
-        /// </summary>
-        /// <param name="iterationColor">Cor desta iteração</param>
-        /// <param name="percentage">Porcentagem de completude</param>
-        /// <param name="start">Início no vetor</param>
-        /// <param name="length">Fim no vetor</param>
         private void PlotPoints(int taskId, IProgress<ProgressReport> progress, byte[] buffer, int start, int length, int byteDepth, MandelbrotPoint[] points)
         {
             int byteStart = start * byteDepth;

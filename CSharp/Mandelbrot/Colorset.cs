@@ -10,15 +10,15 @@ namespace Mandelbrot
 
         public Color EndColor { get; private set; }
 
-        byte deltaRed, deltaGreen, deltaBlue;
+        int deltaRed, deltaGreen, deltaBlue;
 
         public Colorset(Color startColor, Color endColor)
         {
             StartColor = startColor;
             EndColor = endColor;
-            deltaRed =   (byte)(endColor.R - startColor.R);
-            deltaGreen = (byte)(endColor.G - startColor.G);
-            deltaBlue =  (byte)(endColor.B - startColor.B);
+            deltaRed =   (endColor.R - startColor.R);
+            deltaGreen = (endColor.G - startColor.G);
+            deltaBlue =  (endColor.B - startColor.B);
         }
 
         public Color GetColor(double percentage)
