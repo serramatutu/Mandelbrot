@@ -10,4 +10,6 @@ O projeto visa entender mais sobre numeros complexos, processamento paralelo, si
 *Falta escrever esse pedaço :p*
 
 ## Afazeres
+- Melhorar o algorítmo de colorização. Lerp relativo ao menor ponto e ao maior ponto, ao invés de lerp absoluto;
+- XML de dados de plottagem (zoom, X, Y, width, height etc);
 - Plottagem utilizando múltiplos PCs, interligados por um servidor central, que controla o processamento paralelo.
