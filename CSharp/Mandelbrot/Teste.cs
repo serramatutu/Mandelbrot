@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Threading;
+using System.Timers;
 
 namespace Mandelbrot
 {
@@ -20,10 +22,13 @@ namespace Mandelbrot
 
         static readonly string[] ALLOWED_EXTENSIONS = { ".jpeg", ".jpg", ".png", ".bmp" };
 
+        static MandelbrotPlotter plotter;
+
         public static void Main(string[] args)
         {
             Initialize();
 
+            Console.CursorVisible = false;
             Console.Clear();
             Console.WriteLine("-- INICIANDO... ");
             Console.WriteLine("   Iteracoes          : " + iteracoes);
@@ -35,32 +40,51 @@ namespace Mandelbrot
             Console.WriteLine("   EndColor (R,G,B)   : " + endColor.R + " " + endColor.G + " " + endColor.B);
             Console.WriteLine("   Threads            : " + MandelbrotPlotter.THREAD_COUNT);
 
-            MandelbrotPlotter m = new MandelbrotPlotter(width, height,
-                                                        iteracoes, // Iterações
-                                                        zoom, 
-                                                        new PointD(coordX, coordY), 
-                                                        new Colorset(startColor, endColor));
+            plotter = new MandelbrotPlotter(width, height,
+                                            iteracoes, // Iterações
+                                            zoom, 
+                                            new PointD(coordX, coordY), 
+                                            new Colorset(startColor, endColor));
 
             Stopwatch sw = new Stopwatch();
 
-            sw.Start();
-            Bitmap bmp = m.Plot();
-            sw.Stop();
+            // Timer de monitoramento de progresso
+            Console.WriteLine();
+            System.Timers.Timer timer = new System.Timers.Timer(300);
+            timer.Elapsed += Timer_Elapsed;
+            timer.Start();
 
+            // Inicia a plottagem
+            sw.Start();
+            Bitmap bmp = plotter.Plot();
+            sw.Stop();
+            timer.Stop();
+
+            // Mensagem de tempo
             Console.WriteLine();
             Console.WriteLine("-- Calculo pronto!");
             Console.WriteLine("   Tempo: " + sw.ElapsedMilliseconds / 1000f + "s");
 
+            // Salva a imagem
             Console.WriteLine();
             Console.WriteLine("-- Salvando em: " + filePath);
+            bmp.Save(filePath, GetImageFormat(filePath));
 
-            bmp.Save(filePath);
-
+            // Bye bye :)
             Console.WriteLine();
             Console.WriteLine("-- PRONTO!");
             Console.WriteLine("Qualquer tecla para finalizar.");
-
             Console.ReadKey();
+        }
+
+        private static void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            int p = (int)(plotter.Progress * 100);
+
+            if (p < 0)
+                Console.Write("\r Inicializando");
+            else
+                Console.Write("\r" + p + "% completos     ");
         }
 
         public static void Initialize()
@@ -190,6 +214,43 @@ namespace Mandelbrot
                 {
                     Console.WriteLine("Canal invalido.");
                 }
+            }
+        }
+
+        private static ImageFormat GetImageFormat(string fileName)
+        {
+            string extension = Path.GetExtension(fileName);
+            if (string.IsNullOrEmpty(extension))
+                throw new ArgumentException(
+                    string.Format("Unable to determine file extension for fileName: {0}", fileName));
+
+            switch (extension.ToLower())
+            {
+                case @".bmp":
+                    return ImageFormat.Bmp;
+
+                case @".gif":
+                    return ImageFormat.Gif;
+
+                case @".ico":
+                    return ImageFormat.Icon;
+
+                case @".jpg":
+                case @".jpeg":
+                    return ImageFormat.Jpeg;
+
+                case @".png":
+                    return ImageFormat.Png;
+
+                case @".tif":
+                case @".tiff":
+                    return ImageFormat.Tiff;
+
+                case @".wmf":
+                    return ImageFormat.Wmf;
+
+                default:
+                    throw new NotImplementedException();
             }
         }
     }
