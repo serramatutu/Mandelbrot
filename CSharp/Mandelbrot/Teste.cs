@@ -38,9 +38,9 @@ namespace Mandelbrot
             Console.WriteLine("   Zoom               : " + zoom);
             Console.WriteLine("   StartColor (R,G,B) : " + startColor.R+" "+startColor.G+" "+startColor.B);
             Console.WriteLine("   EndColor (R,G,B)   : " + endColor.R + " " + endColor.G + " " + endColor.B);
-            Console.WriteLine("   Threads            : " + MandelbrotPlotter.THREAD_COUNT);
+            Console.WriteLine("   Threads            : " + CPUMandelbrotPlotter.ThreadCount);
 
-            plotter = new MandelbrotPlotter(width, height,
+            plotter = new CPUMandelbrotPlotter(width, height,
                                             iteracoes, // Iterações
                                             zoom, 
                                             new PointD(coordX, coordY), 

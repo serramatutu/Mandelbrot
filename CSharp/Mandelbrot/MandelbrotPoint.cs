@@ -22,23 +22,43 @@ namespace Mandelbrot
             Y = Complex = y;
         }
 
-        private bool escaped = false;
+        public bool Escaped { get; private set; } = false;
 
         public bool Tick()
         {
-            if (escaped)
+            if (Escaped)
                 return false;
 
             double aux = Real * Real - Complex * Complex + X;
             Complex = 2 * Real * Complex + Y;
             Real = aux;
 
-            if (Real*Real + Real*Real >= 4)
+            if (Real * Real + Real * Real >= 4)
             {
-                escaped = true;
+                Escaped = true;
                 return true;
             }
 
+            return false;
+        }
+
+        public int EscapeIteration { get; private set; } = -1;
+
+        public bool Iterate(int iterations)
+        {
+            for (int i=0; i<iterations; i++)
+            {
+                double aux = Real * Real - Complex * Complex + X;
+                Complex = 2 * Real * Complex + Y;
+                Real = aux;
+
+                if (Real * Real + Real * Real >= 4)
+                {
+                    Escaped = true;
+                    EscapeIteration = i;
+                    return true;
+                }
+            }
             return false;
         }
     }
