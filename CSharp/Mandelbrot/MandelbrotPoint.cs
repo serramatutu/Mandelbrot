@@ -33,7 +33,7 @@ namespace Mandelbrot
             Complex = 2 * Real * Complex + Y;
             Real = aux;
 
-            if (Real * Real + Real * Real >= 4)
+            if (Real * Real + Complex * Complex >= 4)
             {
                 Escaped = true;
                 return true;

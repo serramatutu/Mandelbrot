@@ -49,5 +49,15 @@ namespace Mandelbrot
         /// </summary>
         /// <returns>Imagem calculada.</returns>
         public abstract Bitmap Plot();
+
+        public MandelbrotPlotter(int width, int height, int iterations, double zoom, PointD coords, Colorset colorset)
+        {
+            Width = width;
+            Height = height;
+            Iterations = iterations;
+            Zoom = zoom;
+            Coords = coords;
+            Colors = colorset;
+        }
     }
 }

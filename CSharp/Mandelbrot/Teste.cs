@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Threading;
 using System.Timers;
 
 namespace Mandelbrot
@@ -19,6 +18,8 @@ namespace Mandelbrot
         static int height = 720;
         static Color startColor = Color.Black,
                      endColor = Color.Blue;
+
+        static bool GPURendering = true;
 
         static readonly string[] ALLOWED_EXTENSIONS = { ".jpeg", ".jpg", ".png", ".bmp" };
 
@@ -38,13 +39,26 @@ namespace Mandelbrot
             Console.WriteLine("   Zoom               : " + zoom);
             Console.WriteLine("   StartColor (R,G,B) : " + startColor.R+" "+startColor.G+" "+startColor.B);
             Console.WriteLine("   EndColor (R,G,B)   : " + endColor.R + " " + endColor.G + " " + endColor.B);
-            Console.WriteLine("   Threads            : " + CPUMandelbrotPlotter.ThreadCount);
+            //Console.WriteLine("   Threads            : " + CPUMandelbrotPlotter.ThreadCount);
+            Console.WriteLine("   Calculando em      : " + (GPURendering ? "GPU" : "CPU"));
 
-            plotter = new CPUMandelbrotPlotter(width, height,
-                                            iteracoes, // Iterações
-                                            zoom, 
-                                            new PointD(coordX, coordY), 
-                                            new Colorset(startColor, endColor));
+            if (GPURendering)
+            {
+                plotter = new GPUMandelbrotPlotter(width, 
+                                                   height, 
+                                                   iteracoes, 
+                                                   zoom,
+                                                   new PointD(coordX, coordY),
+                                                   new Colorset(startColor, endColor));
+            }
+            else
+            {
+                plotter = new CPUMandelbrotPlotter(width, height,
+                                                   iteracoes, // Iterações
+                                                   zoom,
+                                                   new PointD(coordX, coordY),
+                                                   new Colorset(startColor, endColor));
+            }
 
             Stopwatch sw = new Stopwatch();
 
@@ -97,11 +111,20 @@ namespace Mandelbrot
                 Console.Write("Filepath: ");
                 filePath = Console.ReadLine();
 
-                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                try
                 {
-                    Console.WriteLine("Diretorio inexistente.");
+                    if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                    {
+                        Console.WriteLine("Diretorio inexistente.");
+                        continue;
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine("Caminho inválido.");
                     continue;
                 }
+                
 
                 string ext = Path.GetExtension(filePath);
                 if (Array.IndexOf(ALLOWED_EXTENSIONS, ext) < 0) // Extensão não permitida
@@ -131,6 +154,7 @@ namespace Mandelbrot
             height = AskInt("Height", height);
             startColor = AskColor("Start color", startColor);
             endColor = AskColor("End color", endColor);
+            GPURendering = AskInt("GPU (1) - CPU (2) : ", 1) == 1 ? true : false;
         }
 
         private static double AskDouble(string msg, double def)

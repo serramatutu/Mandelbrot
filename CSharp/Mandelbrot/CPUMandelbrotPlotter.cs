@@ -14,23 +14,12 @@ namespace Mandelbrot
     {
         public static new int ThreadCount = Environment.ProcessorCount;
 
-        private Bitmap plotImg;
-
-        public CPUMandelbrotPlotter(int width, int height, int iterations, double zoom, PointD coords, Colorset colorset) : base()
-        {
-            if (width * height % ThreadCount != 0)
-                throw new ArgumentException("Dimensions must be divisible by "+ ThreadCount);
-
-            Width = width;
-            Height = height;
-            Iterations = iterations;
-            Zoom = zoom;
-            Coords = coords;
-            Colors = colorset;
-        }
+        public CPUMandelbrotPlotter(int width, int height, int iterations, double zoom, PointD coords, Colorset colorset) 
+            : base(width, height, iterations, zoom, coords, colorset)
+        { }
 
         public override Bitmap Plot() {
-            plotImg = new Bitmap(Width, Height);
+            Bitmap plotImg = new Bitmap(Width, Height);
 
             MandelbrotPoint[] points = new MandelbrotPoint[Width * Height];
 
@@ -79,7 +68,7 @@ namespace Mandelbrot
             });
 
             // Inicializa todas as tasks
-            for (int taskId = 0; taskId < ThreadCount; taskId++)
+            for (int taskId = 0; taskId < ThreadCount - 1; taskId++)
             {
                 int t = taskId;
                 tasks[taskId] = new Action(() =>
@@ -87,6 +76,11 @@ namespace Mandelbrot
                         PlotPoints(t, progressReporter, buffer, t * threadLength, threadLength, depth, points);
                     });
             }
+            tasks[ThreadCount - 1] = new Action(() => // Restante dos cálculos, caso a divisão não seja exata
+            {
+                int t = ThreadCount - 1;
+                PlotPoints(t, progressReporter, buffer, t * threadLength, Width * Height - t * threadLength, depth, points);
+            });
 
             Parallel.Invoke(tasks);
 
