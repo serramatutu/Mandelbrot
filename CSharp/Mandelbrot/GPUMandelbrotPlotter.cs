@@ -82,27 +82,18 @@ namespace Mandelbrot
                 // Buffer do OpenCL para manter os dados da imagem
                 OpenCL.Net.ImageFormat clImageFormat = new OpenCL.Net.ImageFormat(ChannelOrder.RGBA, ChannelType.Unsigned_Int8);
 
-                // Obtém o buffer de pixels
-                BitmapData data = plotImg.LockBits(new Rectangle(0, 0, plotImg.Width, plotImg.Height), ImageLockMode.ReadWrite, plotImg.PixelFormat);
-                int depth = Bitmap.GetPixelFormatSize(data.PixelFormat) / 8; // Tamanho de cada pixel em memória, em bytes
+                //// Obtém o buffer de pixels
+                //BitmapData data = plotImg.LockBits(new Rectangle(0, 0, plotImg.Width, plotImg.Height), ImageLockMode.WriteOnly, plotImg.PixelFormat);
+                //int depth = Bitmap.GetPixelFormatSize(data.PixelFormat) / 8; // Tamanho de cada pixel em memória, em bytes
 
-                byte[] buffer = new byte[data.Width * data.Height * depth]; // Cria o buffer para se trabalhar na imagem
-                Marshal.Copy(data.Scan0, buffer, 0, buffer.Length); // Copia as informações da imagem no buffer
-
-                for (int i = 0; i < Width * Height; i++) // Inicializa a imagem com todos os pontos escapados na ultima iteração
-                {
-                    int offset = i * depth;
-
-                    // É invertido :/
-                    buffer[offset] = Colors.EndColor.B;
-                    buffer[offset + 1] = Colors.EndColor.G;
-                    buffer[offset + 2] = Colors.EndColor.R;
-                    buffer[offset + 3] = 255; // Alpha = 255;
-                }
+                int depth = Bitmap.GetPixelFormatSize(PixelFormat.Format32bppArgb) / 8;
+                int stride = 4 * ((Width * depth + 3) / 4);
+                byte[] buffer = new byte[Height * stride]; // Cria o buffer para se trabalhar na imagem
+                //Marshal.Copy(data.Scan0, buffer, 0, buffer.Length); // Copia as informações da imagem no buffer
 
                 // Cria o buffer do OpenCL para a imagem
-                Mem image2dbuffer = (Mem)Cl.CreateImage2D(context, MemFlags.UseHostPtr | MemFlags.WriteOnly, clImageFormat,
-                                                         (IntPtr)data.Width, (IntPtr)data.Height,
+                Mem image2dbuffer = (Mem)Cl.CreateImage2D(context, MemFlags.CopyHostPtr | MemFlags.WriteOnly, clImageFormat,
+                                                         (IntPtr)Width, (IntPtr)Height,
                                                          (IntPtr)0, buffer, out error);
                 CheckErr(error, "Cl.CreateImage2D");
 
@@ -129,12 +120,12 @@ namespace Mandelbrot
                 // Copia a imagem para a GPU
                 Event clevent;
                 IntPtr[] imgOriginPtr = new IntPtr[] { (IntPtr)0, (IntPtr)0, (IntPtr)0 };    //x, y, z
-                IntPtr[] imgRegionPtr = new IntPtr[] { (IntPtr)plotImg.Width, (IntPtr)plotImg.Height, (IntPtr)1 };    //x, y, z
+                IntPtr[] imgRegionPtr = new IntPtr[] { (IntPtr)Width, (IntPtr)Height, (IntPtr)1 };    //x, y, z
                 error = Cl.EnqueueWriteImage(cmdQueue, image2dbuffer, Bool.True, imgOriginPtr, imgRegionPtr, (IntPtr)0, (IntPtr)0, buffer, 0, null, out clevent);
                 CheckErr(error, "Cl.EnqueueWriteImage");
 
                 // Executa o Kernel carregado pelo OpenCL (com múltiplos processadores :D)
-                IntPtr[] workGroupSizePtr = new IntPtr[] { (IntPtr)plotImg.Width, (IntPtr)plotImg.Height, (IntPtr)1 }; // x, y, z
+                IntPtr[] workGroupSizePtr = new IntPtr[] { (IntPtr)Width, (IntPtr)Height, (IntPtr)1 }; // x, y, z
                 error = Cl.EnqueueNDRangeKernel(cmdQueue, kernel, 2, null, workGroupSizePtr, null, 0, null, out clevent);
                 CheckErr(error, "Cl.EnqueueNDRangeKernel");
 
@@ -142,7 +133,7 @@ namespace Mandelbrot
                 error = Cl.Finish(cmdQueue);
                 CheckErr(error, "Cl.Finish");
 
-                //Read the processed image from GPU to raw RGBA data byte[] array
+                // Lê a imagem processada pela GPU e coloca novamente no buffer
                 error = Cl.EnqueueReadImage(cmdQueue, image2dbuffer, Bool.True, imgOriginPtr, imgRegionPtr,
                                             (IntPtr)0, (IntPtr)0, buffer, 0, null, out clevent);
                 CheckErr(error, "Cl.clEnqueueReadImage");
@@ -156,10 +147,11 @@ namespace Mandelbrot
                 //GCHandle pinnedBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
                 //IntPtr bmpPointer = pinnedBuffer.AddrOfPinnedObject();
 
+                BitmapData data = plotImg.LockBits(new Rectangle(0, 0, plotImg.Width, plotImg.Height), ImageLockMode.WriteOnly, plotImg.PixelFormat);
                 Marshal.Copy(buffer, 0, data.Scan0, buffer.Length); // Copia as informações no buffer de volta à imagem
                 plotImg.UnlockBits(data); // Libera a imagem
 
-                //pinnedOutputArray.Free();
+                //pinnedBuffer.Free();
 
                 return plotImg;
             }

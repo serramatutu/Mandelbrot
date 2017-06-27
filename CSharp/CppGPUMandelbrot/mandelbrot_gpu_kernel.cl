@@ -2,8 +2,8 @@ __kernel void mandelbrot(__write_only image2d_t img, uint4 startColor, uint4 end
 	const int width = get_global_size(0);
 	const int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
-	float real = coord.x;
-	float complex = coord.y;
+	float real = (float)coord.x;
+	float complex = (float)coord.y;
 
 	uint4 color = endColor;
 
@@ -15,6 +15,8 @@ __kernel void mandelbrot(__write_only image2d_t img, uint4 startColor, uint4 end
         if (real * real + complex * complex >= 4) // Se escapou do conjunto
         {
 			float percentage = i/(float)iterations;
+
+			// printf("Alpha: %f", percentage);
 
 			color = (uint4)( 
 							 (startColor.w + (endColor.w - startColor.w) * percentage), // Red
